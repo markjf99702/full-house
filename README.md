@@ -1,6 +1,6 @@
 # Full House
 
-**Play it: [junkdrawer.works/full-house](https://junkdrawer.works/full-house/)**
+**Play it: [full-house.junkdrawer.works](https://full-house.junkdrawer.works/)**
 
 **A five-dice game against a ladder of eight opponents, each sharper than the last, on tables that change the rules.** Roll in the felt tray, hold what you like, and pencil your score into the pad beside your opponent's. Beat an opponent to move up a table: Evens in place of Ones, Sixes that score three times over, two-roll turns, wild ones, and on up to the Dealer.
 

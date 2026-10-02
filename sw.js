@@ -2,9 +2,9 @@
 // Anything the person saves lives in localStorage, not here.
 // Network first, so a new version shows up as soon as you're online.
 
-const CACHE = 'full-house-v2'; // bump the number when the file list changes
+const CACHE = 'full-house-v3'; // bump the number when the file list changes
 const SHELL = [
-  './', 'index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
+  './', 'index.html', 'carry.js', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png',
   'css/app.css',
   'fonts/barlow-400.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2',
   'fonts/barlow-condensed-600.woff2', 'fonts/barlow-condensed-700.woff2', 'fonts/caveat.woff2',
