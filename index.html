@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Full House</title>
+  <meta name="description" content="A five-dice game against a ladder of eight opponents, each sharper than the last, on tables that change the rules: evens for ones, triple sixes, two-roll turns, wild ones and more. No ads, no account.">
+  <meta property="og:title" content="Full House">
+  <meta property="og:description" content="Five dice against eight opponents, on tables that change the rules. No ads.">
+  <meta property="og:image" content="https://junkdrawer.works/full-house/og.png">
+  <meta property="og:url" content="https://junkdrawer.works/full-house/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#e9dfcc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1916" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="preload" href="fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/caveat.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body data-screen="home">
+  <noscript><p class="noscript">Full House needs JavaScript to roll the dice.</p></noscript>
+
+  <!-- The tour: eight tables, one opponent each. -->
+  <main class="home" id="home">
+    <header class="masthead">
+      <h1>Full House</h1>
+      <p>Five dice, three rolls, thirteen boxes. Beat each opponent to move up to the next table, where the rules change a little and the play gets sharper.</p>
+    </header>
+    <button type="button" class="continue" id="b-continue" hidden></button>
+    <section class="tour" aria-labelledby="tour-h">
+      <h2 id="tour-h">The tour</h2>
+      <ol class="tables" id="tables"></ol>
+    </section>
+    <section class="quick">
+      <h2>Quick game</h2>
+      <p>Classic rules against anyone you’ve met on the tour.</p>
+      <div class="people" id="people"></div>
+    </section>
+    <footer class="jd-foot">
+      <button type="button" class="linkish" id="b-rules">How to play</button>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/">Part of junkdrawer.works</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://junkdrawer.works/privacy.html">Privacy</a>
+    </footer>
+  </main>
+
+  <!-- A game in progress. -->
+  <div class="game" id="game">
+    <header class="bar">
+      <button type="button" class="icon" id="b-home" aria-label="Back to the tour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button type="button" class="where" id="b-where"><b id="g-table"></b><span id="g-twist"></span></button>
+      <button type="button" class="icon" id="b-menu" aria-label="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+    </header>
+
+    <section class="play">
+      <div class="tray" id="tray" aria-label="Dice"></div>
+      <p class="status" id="status" aria-live="polite"></p>
+      <div class="actions">
+        <span class="rolls" id="rolls" aria-hidden="true"></span>
+        <button type="button" class="roll" id="b-roll">Roll</button>
+      </div>
+    </section>
+
+    <section class="pad-wrap">
+      <table class="pad" id="pad"></table>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <!-- Sheets -->
+  <div class="sheet" id="sheet-intro" hidden>
+    <div class="scrim" data-close></div>
+    <section class="panel" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+      <p class="eyebrow" id="intro-n"></p>
+      <h2 id="intro-title"></h2>
+      <p id="intro-blurb"></p>
+      <div class="who" id="intro-who"></div>
+      <button type="button" class="primary" id="b-sit">Sit down</button>
+      <button type="button" class="plain" data-close>Not yet</button>
+    </section>
+  </div>
+
+  <div class="sheet" id="sheet-result" hidden>
+    <div class="scrim"></div>
+    <section class="panel" role="dialog" aria-modal="true" aria-labelledby="result-title">
+      <h2 id="result-title"></h2>
+      <p id="result-line"></p>
+      <div class="scores" id="result-scores"></div>
+      <button type="button" class="primary" id="b-next"></button>
+      <button type="button" class="plain" id="b-again">Play this table again</button>
+      <button type="button" class="plain" id="b-tour">Back to the tour</button>
+    </section>
+  </div>
+
+  <div class="sheet" id="sheet-menu" hidden>
+    <div class="scrim" data-close></div>
+    <section class="panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <div class="panel-head">
+        <h2 id="menu-title">This table</h2>
+        <button type="button" class="close" data-close aria-label="Close">×</button>
+      </div>
+      <p id="menu-twist"></p>
+      <h3>Settings</h3>
+      <label class="toggle"><input type="checkbox" id="o-fast"><span><b>Quick opponents</b> Opponents roll and score faster. You can also tap the dice to hurry them along.</span></label>
+      <label class="toggle"><input type="checkbox" id="o-hints"><span><b>Show what each box would score</b> After each roll, the open boxes show what the dice would score there.</span></label>
+      <button type="button" class="plain warn" id="b-concede">Give up this game</button>
+    </section>
+  </div>
+
+  <div class="sheet" id="sheet-rules" hidden>
+    <div class="scrim" data-close></div>
+    <section class="panel" role="dialog" aria-modal="true" aria-labelledby="rules-title">
+      <div class="panel-head">
+        <h2 id="rules-title">How to play</h2>
+        <button type="button" class="close" data-close aria-label="Close">×</button>
+      </div>
+      <ul class="rules">
+        <li>On your turn, roll all five dice. Tap any dice you want to hold, then roll the rest. You get three rolls (unless the table says otherwise).</li>
+        <li>After any roll you can stop and score: tap a box on the pad, then tap it again to write the score in. Every turn fills one box, even if it scores nothing.</li>
+        <li><b>Top section:</b> add up the dice showing that number. Reach 63 across the six boxes for a 35-point bonus (three of each number gets you there).</li>
+        <li><b>Three or four of a kind:</b> the total of all five dice. <b>Full house</b>, three of one number and two of another: 25. <b>Small straight</b>, four in a row: 30. <b>Large straight</b>, five in a row: 40. <b>Five of a kind:</b> 50. <b>Chance:</b> the total, whatever the dice.</li>
+        <li>Each five of a kind after the first scores a 100-point bonus, as long as the first one scored 50. It still fills a box: its own number’s box if that’s open, otherwise any box in the bottom section, where a full house or straight counts in full.</li>
+        <li>You and your opponent take turns until every box is filled. The higher total wins.</li>
+      </ul>
+    </section>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
