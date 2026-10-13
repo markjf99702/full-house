@@ -24,7 +24,7 @@
   2. **Evens** against Maud: the Ones box is gone, and Evens adds up every even die instead.
   3. **Triple Sixes** against Bea: the Sixes box scores three times over.
   4. **Two Rolls** against Sol: two rolls a turn instead of three.
-  5. **Wild Ones** against Jules: in the bottom section, a 1 counts as whatever number scores best.
+  5. **Wild Ones** against Jules: in the bottom section, a 1 counts as whatever number scores best, though the extra 100 for another five of a kind needs five dice showing the same number.
   6. **Hot Boxes** against Otto: two boxes, picked at random each time you sit down, score three times over.
   7. **Pairs and the Low Road** against Wren: Two pairs replaces three of a kind, and the Low road (30 for a total of 12 or less) replaces chance.
   8. **High Stakes** against the Dealer: four rolls a turn, and the bottom section scores double.

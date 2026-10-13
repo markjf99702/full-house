@@ -60,6 +60,11 @@ test('wild ones count as whatever scores best, but only in the bottom section', 
   assert.equal(s('five', [1, 6, 6, 1, 6], wild), 50);
   assert.equal(s('four', [1, 6, 6, 2, 6], wild), 26, 'the 1 counts as a 6');
   assert.equal(fiveOf(wild, [1, 6, 6, 1, 6]), 0, 'only a true five of a kind earns the extra bonus');
+  // With Five of a kind scored, a five of a kind made with a 1 earns no extra 100, and the table says so.
+  const card = mark(blankCard(wild), { box: box(wild, 'five'), score: 50, extra: 0 });
+  assert.ok(options(wild, card, [1, 6, 6, 6, 6]).every(o => o.extra === 0));
+  assert.deepEqual(options(wild, card, [6, 6, 6, 6, 6]).map(o => o.extra), [100]);
+  assert.match(wild.blurb, /extra 100 for another five of a kind needs five dice showing the same number/);
 });
 
 test('every table is a complete board; the twists are what they say', () => {
