@@ -291,6 +291,18 @@ try {
     assert.ok(await page.isEnabled('#b-roll'));
   });
 
+  await step('with a mouse, a picked box shows its amber fill', async ({ page, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    const box = await page.locator('tr.can').first().boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width / 2 + 2, box.y + box.height / 2); // the pointer rests on the picked row
+    const fill = await page.evaluate(() => getComputedStyle(document.querySelector('tr.picked th')).backgroundColor);
+    assert.equal(fill, 'rgba(227, 168, 43, 0.38)', 'the picked row is grey under the pointer');
+  }, { desktop: true });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');

@@ -385,7 +385,7 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
 .pad td small { font: 600 12px var(--cond); color: rgba(46, 72, 102, 0.7); letter-spacing: 0.03em; }
 .pad td.offer span { color: var(--offer); font-weight: 500; }
 .pad tr.can { cursor: pointer; }
-.pad tr.can:hover th, .pad tr.can:hover td.you { background: rgba(46, 72, 102, 0.05); }
+.pad tr.can:not(.picked):hover th, .pad tr.can:not(.picked):hover td.you { background: rgba(46, 72, 102, 0.05); }
 .pad tr.can:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .pad tr.picked th, .pad tr.picked td.you { background: rgba(227, 168, 43, 0.38); }
 .pad tr.picked th { box-shadow: inset 4px 0 0 var(--hold); }
