@@ -280,6 +280,27 @@ try {
     assert.equal(await page.locator('#pad td.them.offer').count(), 0, 'a score from the last game is pencilled in');
   });
 
+  await step('reloading during the opponent’s turn plays the same turn again', async ({ page, game, myTurn, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    await page.locator('tr.can').first().click();
+    await page.locator('tr.can').first().click();
+    // What the opponent is about to write in, and the dice it has: reload before it's written, and it comes out the same.
+    const about = () => page.waitForFunction(() => {
+      const said = document.getElementById('status').textContent;
+      return /scores \d+ in/.test(said) && `${said} ${window.fullHouse.game.dice.join('')}`;
+    }, null, { polling: 20, timeout: 30000 }).then(h => h.jsonValue());
+    const before = await about();
+    await page.reload();
+    assert.equal(await about(), before, 'a reload gave the opponent another go at their turn');
+    await myTurn();
+    const them = Object.entries((await game()).them).filter(([id, v]) => id !== 'extras' && v !== null);
+    assert.equal(them.length, 1, 'the opponent filled one box');
+    assert.equal(them[0][1], +/scores (\d+) in/.exec(before)[1], 'the opponent wrote a different score from the one it said');
+  });
+
   await step('with all five dice held there is nothing to roll', async ({ page, game, settled }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');

@@ -5,6 +5,7 @@ import { TABLES, boardFor, CLASSIC } from './tour.js';
 import { Opponent } from './ai.js';
 import { Tray } from './dice.js';
 import { Pad } from './pad.js';
+import { mulberry32 } from './rng.js';
 
 const KEY = 'full-house.v1';
 const $ = id => document.getElementById(id);
@@ -99,12 +100,15 @@ async function theirTurn() {
   const still = () => t === token && game === g;
   const pace = PACE[settings.fast ? 'fast' : 'normal'], name = who(g).name, b = g.board;
   const opp = new Opponent(TABLES[g.opp].play);
+  // Their dice and slips come from the game's seed and the turn number, so a turn cut short by a reload (or a phone
+  // closing the tab) plays out the same way again, instead of giving them another go.
+  const rand = mulberry32((g.seed ^ Math.imul(g.number, 0x9E3779B1)) >>> 0), roll = () => 1 + Math.floor(rand() * 6);
   playing = t;
   busy = true;
   hurry = false;
 
   g.held = [false, false, false, false, false];
-  g.dice = g.dice.map(die);
+  g.dice = g.dice.map(roll);
   g.rolls = 1;
   status(`${name} rolls.`);
   showDice([0, 1, 2, 3, 4]);
@@ -113,7 +117,7 @@ async function theirTurn() {
   if (!still()) return;
 
   for (let left = b.rolls - 1; left > 0; left--) {
-    const keep = opp.keep(b, g.them, g.dice, left);
+    const keep = opp.keep(b, g.them, g.dice, left, rand);
     if (!keep) break;
     g.held = keep;
     const n = keep.filter(Boolean).length;
@@ -122,14 +126,14 @@ async function theirTurn() {
     await wait(pace.think);
     if (!still()) return;
     const rolled = [];
-    g.dice = g.dice.map((d, i) => (keep[i] ? d : (rolled.push(i), die())));
+    g.dice = g.dice.map((d, i) => (keep[i] ? d : (rolled.push(i), roll())));
     g.rolls++;
     showDice(rolled);
     await wait(pace.roll);
     if (!still()) return;
   }
 
-  const option = opp.box(b, g.them, g.dice);
+  const option = opp.box(b, g.them, g.dice, rand);
   theirPick = { id: option.box.id, score: option.score };
   status(`${name} scores ${option.score} in ${boxLabel(option.box)}.`);
   render();
@@ -410,7 +414,7 @@ if ('serviceWorker' in navigator && !('single' in document.documentElement.datas
 
 open('home');
 if (game) {
-  // A game in progress comes back where you left it. An opponent's turn that was cut short starts over.
+  // A game in progress comes back where you left it. An opponent's turn that was cut short starts over, the same turn.
   open('game');
   showDice();
   render();
