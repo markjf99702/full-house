@@ -198,6 +198,22 @@ try {
     assert.equal(Object.values(g.them).filter(v => v !== null).length - 1, 2, 'the opponent filled one box a turn');
   });
 
+  await step('tapping the dice hurries the opponent along', async ({ page, myTurn, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    await page.locator('tr.can').first().click();
+    await page.locator('tr.can').first().click();
+    await page.waitForFunction(() => /rolls\.$/.test(document.getElementById('status').textContent));
+    // At the usual pace their turn takes four and a half seconds; tapping their dice (not the felt) rushes it.
+    const t0 = Date.now();
+    const die = await page.locator('.die >> nth=2').boundingBox();
+    for (let i = 0; i < 3; i++) await page.touchscreen.tap(die.x + die.width / 2, die.y + die.height / 2);
+    await myTurn();
+    assert.ok(Date.now() - t0 < 3000, `their turn took ${Date.now() - t0} ms after tapping the dice`);
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
