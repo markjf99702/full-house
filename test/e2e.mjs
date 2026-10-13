@@ -303,6 +303,24 @@ try {
     assert.equal(fill, 'rgba(227, 168, 43, 0.38)', 'the picked row is grey under the pointer');
   }, { desktop: true });
 
+  await step('keyboard: R rolls wherever the focus is, and the browser keeps its shortcuts', async ({ page, game, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.evaluate(() => addEventListener('keydown', e => { window.kept = e.defaultPrevented; }));
+    await page.keyboard.press('Control+r');
+    assert.equal((await game()).rolls, 0, 'Ctrl+R rolled the dice');
+    assert.equal(await page.evaluate(() => window.kept), false, 'Ctrl+R was kept from the browser');
+    await page.keyboard.press('r');
+    await settled();
+    assert.equal((await game()).rolls, 1);
+    await page.keyboard.press('Control+1');
+    assert.equal((await game()).held[0], false, 'Ctrl+1 held a die');
+    await page.click('.die >> nth=0'); // holds it, and the focus is on it now
+    await page.keyboard.press('Shift+R');
+    await settled();
+    assert.equal((await game()).rolls, 2, 'R did nothing with a die focused');
+  }, { desktop: true });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');

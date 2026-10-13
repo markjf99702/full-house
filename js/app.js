@@ -376,8 +376,10 @@ for (const [k, id] of [['fast', 'o-fast'], ['hints', 'o-hints']]) {
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeSheets(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return; // the browser's shortcuts, like Ctrl+R to reload
   if (document.body.dataset.screen !== 'game' || document.querySelector('.sheet:not([hidden])')) return;
-  if ((e.key === ' ' || e.key === 'r') && e.target === document.body) { e.preventDefault(); roll(); }
+  // R rolls wherever the focus is; Space only when nothing has it, since Space presses the button in focus.
+  if (e.key.toLowerCase() === 'r' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); roll(); }
   if (/^[1-5]$/.test(e.key)) toggle(+e.key - 1);
 });
 
