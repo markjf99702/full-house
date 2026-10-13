@@ -28,9 +28,11 @@ const die = () => 1 + Math.floor(Math.random() * 6);
 
 // ---- your turn ----
 
+const allHeld = g => g.rolls > 0 && g.held.every(Boolean); // nothing left to roll
+
 function roll() {
   const g = game;
-  if (!g || busy || g.turn !== 'you' || g.rolls >= g.board.rolls) return;
+  if (!g || busy || g.turn !== 'you' || g.rolls >= g.board.rolls || allHeld(g)) return;
   picked = null;
   const rolled = [];
   g.dice = g.dice.map((d, i) => (g.held[i] && g.rolls > 0 ? d : (rolled.push(i), die())));
@@ -258,7 +260,7 @@ function render() {
   const left = b.rolls - g.rolls;
   $('rolls').innerHTML = Array.from({ length: b.rolls }, (_, i) => `<i class="${i < g.rolls && (mine || g.turn === 'them') ? 'used' : ''}"></i>`).join('');
   const button = $('b-roll');
-  button.disabled = !mine || busy || left <= 0;
+  button.disabled = !mine || busy || left <= 0 || allHeld(g);
   button.textContent = !mine ? (g.over ? 'Game over' : `${opp.name}’s turn`) : g.rolls === 0 ? 'Roll' : left > 0 ? `Roll again (${left} left)` : 'No rolls left';
 
   if (mine && !busy) {

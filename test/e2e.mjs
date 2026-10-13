@@ -276,6 +276,21 @@ try {
     assert.equal(await page.locator('#pad td.them.offer').count(), 0, 'a score from the last game is pencilled in');
   });
 
+  await step('with all five dice held there is nothing to roll', async ({ page, game, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    for (let i = 0; i < 5; i++) await page.click(`.die >> nth=${i}`);
+    assert.ok(await page.isDisabled('#b-roll'), 'Roll is on with every die held');
+    await page.evaluate(() => document.activeElement.blur());
+    await page.keyboard.press(' ');
+    assert.equal((await game()).rolls, 1, 'a roll was used up with every die held');
+    // Let one go and you can roll again.
+    await page.click('.die >> nth=4');
+    assert.ok(await page.isEnabled('#b-roll'));
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
