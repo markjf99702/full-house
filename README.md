@@ -55,11 +55,15 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 
 - `js/rules.js`: the rules. Boxes as plain data, scoring (wild ones and multipliers included), the five-of-a-kind bonus and joker rules, and the totals.
 - `js/tour.js`: the eight tables, each a board and an opponent.
+- `js/rng.js`: seeded random numbers, so a Hot Boxes table comes out the same from its seed.
 - `js/ai.js`: how the opponents play. Every roll and every handful of dice you might keep, worked out ahead, and the values that make one opponent better than another.
 - `js/dice.js`: the dice, drawn as real cubes that tumble and land face up.
 - `js/pad.js`: the score pad.
 - `js/app.js`: the tour, your turns, the opponent's turns played out on the table, and saving.
 - `fonts/`: Barlow, Barlow Condensed and Caveat (SIL Open Font License), served from here so nothing loads from elsewhere.
 - `sw.js`: keeps a copy for playing offline.
+- `carry.js`: brings saves over from the old address, junkdrawer.works/full-house/, the first time the game opens here.
 - `test/`: the rules and the opponents in Node, and a game played through the real page.
+- `tools/`: redraws the README screenshots, the link preview and the icons.
+- `scripts/build.mjs`: bundles the game into one file, `dist/full-house.html`.
 - `dev/`: tools used while building it: opponent strength runs and quick screenshots.
