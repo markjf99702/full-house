@@ -13,12 +13,13 @@ const settings = { fast: false, hints: true, ...saved.settings };
 const progress = { beaten: [], best: [], played: [], won: [], quick: { played: 0, won: 0 }, ...saved.progress };
 
 let game = saved.game && !saved.game.over ? saved.game : null;
-let busy = false;      // dice in the air, or the opponent playing
+let busy = false;      // dice in the air, or the opponent playing (or about to)
 let hurry = false;     // the player tapped to hurry the opponent along
 let picked = null;     // the box you've tapped once and not yet scored
 let fresh = {};        // boxes just written in, pencilled in as you watch
 let theirPick = null;  // the box the opponent is about to write in
 let token = 0;         // changes whenever a game starts or ends, so a turn being played out knows to stop
+let playing = -1;      // the token of the game whose opponent is playing a turn right now, so only one copy runs
 
 const tray = new Tray($('tray'), { onToggle: toggle, onTap: () => { if (busy && game?.turn === 'them') hurry = true; } });
 const pad = new Pad($('pad'), { onPick: pick });
@@ -66,6 +67,7 @@ function pick(id) {
   else if (option.box.kind === 'five' && option.score) toast('Five of a kind!');
   g.turn = 'them';
   g.held = [false, false, false, false, false];
+  busy = true; // the opponent is about to play, so going back and carrying on mustn't start their turn as well
   save();
   render();
   showDice();
@@ -86,10 +88,13 @@ function wait(ms) {
 
 async function theirTurn() {
   const g = game, t = token;
-  if (!g || g.turn !== 'them' || g.over) return;
+  if (!g || g.turn !== 'them' || g.over || playing === t) return;
+  // A game saved while two copies of a turn ran at once can have the opponent's card full already.
+  if (filled(g.board, g.them)) { if (filled(g.board, g.you)) finish(); else yourTurn(g); return; }
   const still = () => t === token && game === g;
   const pace = PACE[settings.fast ? 'fast' : 'normal'], name = who(g).name, b = g.board;
   const opp = new Opponent(TABLES[g.opp].play);
+  playing = t;
   busy = true;
   hurry = false;
 
@@ -133,12 +138,17 @@ async function theirTurn() {
   else if (option.box.kind === 'five' && option.score) toast(`${name} rolls five of a kind.`);
 
   if (filled(b, g.you) && filled(b, g.them)) { finish(); return; }
+  yourTurn(g);
+}
+
+function yourTurn(g) {
   g.turn = 'you';
   g.number++;
   g.rolls = 0;
   g.held = [false, false, false, false, false];
   busy = false;
   hurry = false;
+  playing = -1;
   save();
   render();
   showDice();
@@ -274,7 +284,7 @@ function renderHome() {
   $('people').innerHTML = met.map(({ t, i }) => `<button type="button" data-quick="${i}"><i class="dot" style="--c:${t.who.colour}"></i>${t.who.name}</button>`).join('');
   const c = $('b-continue');
   c.hidden = !game;
-  if (game) c.innerHTML = `<b>Carry on</b><span>${game.table === null ? 'Quick game' : `Table ${game.table + 1}: ${game.board.name}`}, against ${who(game).name}. Turn ${game.number} of ${game.board.boxes.length}.</span>`;
+  if (game) c.innerHTML = `<b>Carry on</b><span>${game.table === null ? 'Quick game' : `Table ${game.table + 1}: ${game.board.name}`}, against ${who(game).name}. Turn ${Math.min(game.number, game.board.boxes.length)} of ${game.board.boxes.length}.</span>`;
 }
 
 function open(screen) {
@@ -379,7 +389,7 @@ if (game) {
   open('game');
   showDice();
   render();
-  if (game.turn === 'them') setTimeout(theirTurn, 500);
+  if (game.turn === 'them') { busy = true; setTimeout(theirTurn, 500); }
 }
 
 // For the tests and the screenshot tool.

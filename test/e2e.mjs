@@ -156,6 +156,68 @@ try {
     assert.equal(await page.locator('.die').count(), 5, 'the game did not load offline');
     await ctx.setOffline(false);
   }, { serviceWorkers: 'allow' });
+
+  await step('the opponent plays one turn, even after back and carry on while the turn passes', async ({ page, game, myTurn, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.evaluate(() => { window.fullHouse.settings.fast = true; });
+    await page.click('#b-roll');
+    await settled();
+    // Score a box, then back to the tour and carry on, all before the opponent has started.
+    await page.evaluate(() => {
+      const row = () => document.querySelector('#pad tr.can');
+      const id = row().dataset.box;
+      row().click();
+      document.querySelector(`#pad tr[data-box="${id}"]`).click();
+      document.getElementById('b-home').click();
+      document.getElementById('b-continue').click();
+    });
+    await myTurn();
+    await page.waitForTimeout(3000); // a second copy of the turn would land a moment after the first
+    let g = await game();
+    assert.equal(g.turn, 'you');
+    assert.equal(g.number, 2, 'one turn each');
+    assert.equal(Object.values(g.them).filter(v => v !== null).length - 1, 1, 'the opponent filled one box');
+
+    // The same just after opening the game again during the opponent's turn.
+    await page.click('#b-roll');
+    await settled();
+    await page.locator('tr.can').first().click();
+    await page.locator('tr.can').first().click();
+    await page.reload({ waitUntil: 'commit' });
+    await page.waitForFunction(() => {
+      if (!window.fullHouse) return false;
+      document.getElementById('b-home').click();
+      document.getElementById('b-continue').click();
+      return true;
+    }, null, { polling: 10 });
+    await myTurn();
+    await page.waitForTimeout(3000);
+    g = await game();
+    assert.equal(g.number, 3, 'one turn each');
+    assert.equal(Object.values(g.them).filter(v => v !== null).length - 1, 2, 'the opponent filled one box a turn');
+  });
+
+  await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    const stuck = async (theirs, yours) => {
+      await page.evaluate(([theirs, yours]) => {
+        const g = structuredClone(window.fullHouse.game);
+        g.board.boxes.forEach((b, i) => { g.them[b.id] = i < theirs ? 5 : null; g.you[b.id] = i < yours ? 20 : null; });
+        Object.assign(g, { number: 14, rolls: 3, turn: 'them' });
+        localStorage.setItem('full-house.v1', JSON.stringify({ settings: { fast: true }, progress: window.fullHouse.progress, game: g }));
+      }, [theirs, yours]);
+      await page.reload();
+    };
+    // The opponent's card is full but yours isn't: it's your turn.
+    await stuck(13, 11);
+    await myTurn();
+    // Both full: the game ends.
+    await stuck(13, 13);
+    await page.waitForSelector('#sheet-result:not([hidden])', { timeout: 15000 });
+    assert.match(await page.textContent('#result-title'), /You beat Pip/);
+  });
 } finally {
   await browser.close();
   server.close();
