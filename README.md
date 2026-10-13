@@ -28,7 +28,7 @@
   6. **Hot Boxes** against Otto: two boxes, picked at random each time you sit down, score three times over.
   7. **Pairs and the Low Road** against Wren: Two pairs replaces three of a kind, and the Low road (30 for a total of 12 or less) replaces chance.
   8. **High Stakes** against the Dealer: four rolls a turn, and the bottom section scores double.
-- **Opponents who plan.** Five dice can only land 252 different ways, so an opponent works out, for every possible roll, which dice to keep for the best result over the rest of its turn. It values each box by what it scores now, what it might be worth later, and the top-section bonus. The early opponents leave parts of that out and make mistakes on purpose, and some have a style: Jules chases five of a kind, Otto rarely misses the bonus. On classic rules Pip averages about 142, and the Dealer about 243 (the best possible play averages about 254).
+- **Opponents who plan.** Five dice can only land 252 different ways, so an opponent works out, for every possible roll, which dice to keep for the best result over the rest of its turn. It values each box by what it scores now, what it might be worth later, and the top-section bonus. The early opponents leave parts of that out and make mistakes on purpose, and some have a style: Jules chases five of a kind, Otto rarely misses the bonus. On classic rules Pip averages about 144, and the Dealer about 243 (the best possible play averages about 254).
 - **Watch them play.** Their red dice tumble in your tray and their scores go into the pad in red pencil. Tap the dice to hurry them along, or turn on quick opponents.
 - **Quick game.** Classic rules against anyone you've met on the tour.
 - **Your progress.** The tables you've beaten and your best score at each. Giving up part way counts as a loss.
@@ -56,7 +56,7 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 
 - `js/rules.js`: the rules. Boxes as plain data, scoring (wild ones and multipliers included), the five-of-a-kind bonus and joker rules, and the totals.
 - `js/tour.js`: the eight tables, each a board and an opponent.
-- `js/rng.js`: seeded random numbers, so a Hot Boxes table comes out the same from its seed.
+- `js/rng.js`: seeded random numbers, so a Hot Boxes table comes out the same from its seed, and an opponent's turn cut short by a reload plays out the same way again.
 - `js/ai.js`: how the opponents play. Every roll and every handful of dice you might keep, worked out ahead, and the values that make one opponent better than another.
 - `js/dice.js`: the dice, drawn as real cubes that tumble and land face up.
 - `js/pad.js`: the score pad.
