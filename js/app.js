@@ -11,8 +11,11 @@ const $ = id => document.getElementById(id);
 const saved = read();
 const settings = { fast: false, hints: true, ...saved.settings };
 const progress = { beaten: [], best: [], played: [], won: [], quick: { played: 0, won: 0 }, ...saved.progress };
+// The game only ever saves these whole, but a save damaged some other way shouldn't stop it from starting.
+for (const k of ['beaten', 'best', 'played', 'won']) if (!Array.isArray(progress[k])) progress[k] = [];
+progress.quick = { played: 0, won: 0, ...(progress.quick && typeof progress.quick === 'object' ? progress.quick : {}) };
 
-let game = saved.game && !saved.game.over ? saved.game : null;
+let game = whole(saved.game) ? saved.game : null;
 let busy = false;      // dice in the air, or the opponent playing (or about to)
 let hurry = false;     // the player tapped to hurry the opponent along
 let picked = null;     // the box you've tapped once and not yet scored
@@ -344,6 +347,16 @@ const escape = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt
 
 function read() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
+}
+// A saved game still being played, with every part the page reads there to pick it up again.
+function whole(g) {
+  try {
+    const five = a => Array.isArray(a) && a.length === 5, b = g.board;
+    return !g.over && (g.turn === 'you' || g.turn === 'them') && Number.isInteger(g.number) && Number.isInteger(g.rolls)
+      && Number.isInteger(g.opp) && !!TABLES[g.opp] && (g.table === null || (Number.isInteger(g.table) && !!TABLES[g.table]))
+      && five(g.dice) && g.dice.every(d => Number.isInteger(d) && d >= 1 && d <= 6) && five(g.held)
+      && b.rolls > 0 && b.bonus.at > 0 && b.boxes.length > 0 && b.boxes.every(x => boxLabel(x) && x.id in g.you && x.id in g.them);
+  } catch { return false; } // a part missing altogether
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify({ settings, progress, game: game && !game.over ? game : null })); } catch { /* storage full or blocked */ }

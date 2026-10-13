@@ -374,6 +374,31 @@ try {
     assert.equal(await page.textContent('#g-table'), 'Quick game');
   });
 
+  await step('a damaged save opens on the tour, keeping what it can', async ({ page }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    const good = await page.evaluate(() => structuredClone(window.fullHouse.game));
+    const load = async save => {
+      await page.evaluate(s => localStorage.setItem('full-house.v1', s), JSON.stringify(save));
+      await page.reload();
+      return page.evaluate(() => document.body.dataset.screen);
+    };
+    // Progress with a part that isn't a list: the tour still shows.
+    await load({ progress: { beaten: null, best: [250] } });
+    assert.equal(await page.locator('#tables li').count(), 8);
+    assert.equal(await page.locator('#people button').count(), 1);
+    // A game with parts missing or out of range is dropped, and the progress kept.
+    const progress = { beaten: [true], best: [250], played: [1], won: [1] };
+    const broken = [{ table: 0, opp: 0, turn: 'you', number: 1, rolls: 0 }, {}, { ...good, opp: 99 }, { ...good, turn: 'them', you: null, them: null }, { ...good, dice: [0, 1, 2, 3, 4] }];
+    for (const g of broken) {
+      assert.equal(await load({ progress, game: g }), 'home');
+      assert.ok(await page.isHidden('#b-continue'), `a damaged game is offered to carry on: ${JSON.stringify(g).slice(0, 50)}`);
+      assert.match(await page.textContent('#tables li:nth-child(2)'), /Next up/);
+    }
+    // A whole game still picks up where it was.
+    assert.equal(await load({ progress, game: good }), 'game');
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
