@@ -415,6 +415,12 @@ try {
     for (const [shown, read] of dice) assert.equal(shown, read, `a die shows ${shown} and is read out as ${read}`);
   });
 
+  await step('the tour’s footer has the house line, then How to play', async ({ page }) => {
+    assert.deepEqual(await page.locator('.jd-foot a, .jd-foot button').allTextContents(), ['Part of junkdrawer.works', 'Privacy', 'How to play']);
+    await page.click('#b-rules');
+    assert.ok(await page.isVisible('#sheet-rules .panel'));
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
