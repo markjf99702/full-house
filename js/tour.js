@@ -80,7 +80,7 @@ export const TABLES = [
   {
     board: {
       ...base, id: 'hot', name: 'Hot Boxes',
-      blurb: 'Two boxes, picked at random each time you sit down, score three times over.',
+      blurb: 'Two boxes, picked at random each time you sit down, score three times over. When one is a number box, the top-section bonus needs more to match.',
       hot: true,
     },
     who: { name: 'Otto', line: 'Steady. Rarely misses the bonus.', colour: '#2f7d74' },
