@@ -210,14 +210,16 @@ function finish() {
   setTimeout(() => openSheet('sheet-result'), 900);
 }
 
-// Leaving a game part way counts as a loss at that table.
+// Leaving a game part way counts as a loss at that table. Leaving one that's over just goes back to the tour.
 function concede(quietly) {
   const g = game;
-  if (!g || g.over) return;
-  token++;
-  if (g.table !== null) progress.played[g.table] = (progress.played[g.table] || 0) + 1;
-  else progress.quick.played++;
-  g.over = true;
+  if (!g) return;
+  if (!g.over) {
+    token++;
+    if (g.table !== null) progress.played[g.table] = (progress.played[g.table] || 0) + 1;
+    else progress.quick.played++;
+    g.over = true;
+  }
   game = null;
   busy = false;
   save();
@@ -282,9 +284,9 @@ function renderHome() {
   }).join('');
   const met = TABLES.map((t, i) => ({ t, i })).filter(({ i }) => i === 0 || progress.beaten[i - 1]);
   $('people').innerHTML = met.map(({ t, i }) => `<button type="button" data-quick="${i}"><i class="dot" style="--c:${t.who.colour}"></i>${t.who.name}</button>`).join('');
-  const c = $('b-continue');
-  c.hidden = !game;
-  if (game) c.innerHTML = `<b>Carry on</b><span>${game.table === null ? 'Quick game' : `Table ${game.table + 1}: ${game.board.name}`}, against ${who(game).name}. Turn ${Math.min(game.number, game.board.boxes.length)} of ${game.board.boxes.length}.</span>`;
+  const c = $('b-continue'), going = game && !game.over;
+  c.hidden = !going;
+  if (going) c.innerHTML = `<b>Carry on</b><span>${game.table === null ? 'Quick game' : `Table ${game.table + 1}: ${game.board.name}`}, against ${who(game).name}. Turn ${Math.min(game.number, game.board.boxes.length)} of ${game.board.boxes.length}.</span>`;
 }
 
 function open(screen) {

@@ -49,6 +49,23 @@ async function step(name, fn, { desktop = false, serviceWorkers = 'block' } = {}
   console.log(`ok  ${name}`);
 }
 
+// The last turn of a game you're well ahead in, with only Chance left to fill: roll, score it, and win.
+async function win({ page, myTurn, settled }) {
+  await page.evaluate(() => {
+    const g = structuredClone(window.fullHouse.game);
+    for (const b of g.board.boxes) { g.you[b.id] = b.id === 'chance' ? null : 20; g.them[b.id] = b.id === 'chance' ? null : 5; }
+    Object.assign(g, { number: 13, rolls: 0, turn: 'you' });
+    window.fullHouse.settings.fast = true;
+    window.fullHouse.set(g);
+  });
+  await myTurn();
+  await page.click('#b-roll');
+  await settled();
+  await page.locator('tr.can').first().click();
+  await page.locator('tr.can').first().click();
+  await page.waitForSelector('#sheet-result:not([hidden])', { timeout: 30000 });
+}
+
 try {
   await step('a game through the tour', async ({ page, ctx, game, myTurn, settled }) => {
     // The tour: the first table open, the rest locked.
@@ -212,6 +229,32 @@ try {
     for (let i = 0; i < 3; i++) await page.touchscreen.tap(die.x + die.width / 2, die.y + die.height / 2);
     await myTurn();
     assert.ok(Date.now() - t0 < 3000, `their turn took ${Date.now() - t0} ms after tapping the dice`);
+  });
+
+  await step('a finished game is not offered to carry on', async t => {
+    const { page } = t;
+    const screen = () => page.evaluate(() => document.body.dataset.screen);
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await win(t);
+    // On to table 2, then Not yet: you're left on the finished game. Back to the tour.
+    await page.click('#b-next');
+    await page.click('#sheet-intro [data-close].plain');
+    assert.equal(await screen(), 'game');
+    await page.click('#b-home');
+    assert.ok(await page.isHidden('#b-continue'), 'Carry on offered for a finished game');
+
+    // Escape on the result sheet, then Give up from the menu: back to the tour.
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await win(t);
+    await page.keyboard.press('Escape');
+    await page.click('#b-menu');
+    await page.click('#b-concede');
+    assert.equal(await screen(), 'home');
+    assert.ok(await page.isHidden('#sheet-menu'));
+    assert.ok(await page.isHidden('#b-continue'), 'Carry on offered for a finished game');
+    assert.equal((await page.evaluate(() => window.fullHouse.progress)).played[0], 2, 'two games played, no extra loss');
   });
 
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
