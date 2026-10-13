@@ -49,8 +49,8 @@ async function step(name, fn, { desktop = false, serviceWorkers = 'block' } = {}
   console.log(`ok  ${name}`);
 }
 
-// The last turn of a game you're well ahead in, with only Chance left to fill: roll, score it, and win.
-async function win({ page, myTurn, settled }) {
+// The last turn of a game you're well ahead in, with only Chance left to fill: roll and score it.
+async function lastTurn({ page, myTurn, settled }) {
   await page.evaluate(() => {
     const g = structuredClone(window.fullHouse.game);
     for (const b of g.board.boxes) { g.you[b.id] = b.id === 'chance' ? null : 20; g.them[b.id] = b.id === 'chance' ? null : 5; }
@@ -63,7 +63,11 @@ async function win({ page, myTurn, settled }) {
   await settled();
   await page.locator('tr.can').first().click();
   await page.locator('tr.can').first().click();
-  await page.waitForSelector('#sheet-result:not([hidden])', { timeout: 30000 });
+}
+// ...and once the opponent has played their last turn, the result.
+async function win(t) {
+  await lastTurn(t);
+  await t.page.waitForSelector('#sheet-result:not([hidden])', { timeout: 30000 });
 }
 
 try {
@@ -352,6 +356,23 @@ try {
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.table), '0', 'the focus did not come back to table 1');
   }, { desktop: true });
+
+  await step('the result of a finished game does not pop up over the next one', async t => {
+    const { page } = t;
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await lastTurn(t);
+    // As soon as the game is over, before its result shows: back to the tour and a quick game.
+    await page.waitForFunction(() => {
+      if (!window.fullHouse.game?.over) return false;
+      document.getElementById('b-home').click();
+      document.querySelector('[data-quick="0"]').click();
+      return true;
+    }, null, { polling: 20, timeout: 30000 });
+    await page.waitForTimeout(1500);
+    assert.ok(await page.isHidden('#sheet-result'), 'the last game’s result popped up over the new one');
+    assert.equal(await page.textContent('#g-table'), 'Quick game');
+  });
 
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');

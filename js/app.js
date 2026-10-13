@@ -210,7 +210,8 @@ function finish() {
   if (won && g.table !== null && !last) { next.textContent = `On to table ${g.table + 2}`; next.onclick = () => intro(g.table + 1); }
   else { next.textContent = 'Play again'; next.onclick = () => start(g.table, g.opp); }
   $('b-again').hidden = !(won && g.table !== null && !last);
-  setTimeout(() => openSheet('sheet-result'), 900);
+  const t = token;
+  setTimeout(() => { if (t === token && game === g) openSheet('sheet-result'); }, 900); // unless a new game has started
 }
 
 // Leaving a game part way counts as a loss at that table. Leaving one that's over just goes back to the tour.
