@@ -151,7 +151,8 @@ export class Opponent {
   // Which box to score in.
   box(board, card, dice, rand = Math.random) {
     const opts = options(board, card, dice);
-    const value = this.p.look ? valuer(board, card, this.p) : o => o.score + o.extra - (o.box.kind === 'five' ? 30 : 0);
+    // The beginner takes the most points, but would rather not cross out Five of a kind.
+    const value = this.p.look ? valuer(board, card, this.p) : o => o.score + o.extra - (o.box.kind === 'five' && !o.score ? 30 : 0);
     const ranked = opts.map(o => ({ o, v: value(o) })).sort((a, b) => b.v - a.v);
     return (ranked.length > 1 && rand() < this.p.slip ? ranked[1] : ranked[0]).o;
   }
