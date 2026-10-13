@@ -23,7 +23,9 @@ export class Pad {
   // which box is picked, and which boxes were just written in (to pencil them in as you watch).
   render({ board, you, them, name, offers = null, picked = null, fresh = {}, hints = true, theirPick = null }) {
     // Redrawing replaces the rows, so note the one with the keyboard focus to give it back afterwards.
-    const focused = this.el.contains(document.activeElement) ? document.activeElement.closest('tr[data-box]')?.dataset.box : null;
+    // Only the keyboard's: a box picked with a tap or a click would keep it too, and the next Space would score it.
+    const a = document.activeElement;
+    const focused = this.el.contains(a) && fromKeyboard(a) ? a.closest('tr[data-box]')?.dataset.box : null;
     const ty = totals(board, you), tt = totals(board, them);
     const cell = (card, b, who) => {
       const v = card[b.id];
@@ -58,3 +60,5 @@ export class Pad {
 }
 
 const escape = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// Whether the focus came from the keyboard, the way a browser decides to draw a focus ring. Browsers too old to say count as no.
+const fromKeyboard = el => { try { return el.matches(':focus-visible'); } catch { return false; } };

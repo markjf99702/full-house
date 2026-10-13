@@ -348,6 +348,22 @@ try {
     assert.equal(g.turn, 'them');
   }, { desktop: true });
 
+  await step('with a mouse, Space still rolls after picking a box', async ({ page, game, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    const row = page.locator('tr.can').first();
+    const id = await row.getAttribute('data-box');
+    await row.click(); // picked, to see what it would score
+    assert.match(await page.textContent('#status'), /again to score/);
+    await page.keyboard.press(' ');
+    await settled();
+    const g = await game();
+    assert.equal(g.you[id], null, 'Space scored the box picked with the mouse');
+    assert.equal(g.rolls, 2);
+  }, { desktop: true });
+
   await step('keyboard: Tab stays inside an open sheet, and the focus comes back after', async ({ page }) => {
     await page.focus('[data-table="0"]');
     await page.keyboard.press('Enter');
