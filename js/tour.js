@@ -71,7 +71,7 @@ export const TABLES = [
   {
     board: {
       ...base, id: 'wild', name: 'Wild Ones',
-      blurb: 'In the bottom section, every 1 counts as whatever number scores best. In the top section a 1 is just a 1. The extra 100 for another five of a kind needs five dice showing the same number.',
+      blurb: 'In the bottom section, every 1 counts as whatever number scores best. In the top section a 1 is just a\u00a01. The extra 100 for another five of a kind needs five dice showing the same number.',
       boxes: boxes(), wild: true,
     },
     who: { name: 'Jules', line: 'Chases five of a kind, every time.', colour: '#7a4f8f' },
