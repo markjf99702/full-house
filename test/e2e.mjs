@@ -321,6 +321,21 @@ try {
     assert.equal((await game()).rolls, 2, 'R did nothing with a die focused');
   }, { desktop: true });
 
+  await step('keyboard: Enter on a box picks it, and Enter again scores it', async ({ page, game, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.keyboard.press('r');
+    await settled();
+    await page.focus('tr.can >> nth=0'); // where Tab gets to after the dice and Roll
+    const id = await page.evaluate(() => document.activeElement.dataset.box);
+    await page.keyboard.press('Enter');
+    assert.match(await page.textContent('#status'), /again to score/);
+    await page.keyboard.press('Enter');
+    const g = await game();
+    assert.notEqual(g.you[id], null, 'the second Enter did not score the box');
+    assert.equal(g.turn, 'them');
+  }, { desktop: true });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');

@@ -22,6 +22,8 @@ export class Pad {
   // board, both cards, the opponent's name, and on your turn: what each allowed box would score ({ id: score }),
   // which box is picked, and which boxes were just written in (to pencil them in as you watch).
   render({ board, you, them, name, offers = null, picked = null, fresh = {}, hints = true, theirPick = null }) {
+    // Redrawing replaces the rows, so note the one with the keyboard focus to give it back afterwards.
+    const focused = this.el.contains(document.activeElement) ? document.activeElement.closest('tr[data-box]')?.dataset.box : null;
     const ty = totals(board, you), tt = totals(board, them);
     const cell = (card, b, who) => {
       const v = card[b.id];
@@ -51,6 +53,7 @@ export class Pad {
         ${anyExtras ? `<tr class="sub"><th scope="row"><b>Extra fives</b><small>${board.extra} each</small></th><td>${ty.extras || ''}</td><td>${tt.extras || ''}</td></tr>` : ''}
       </tbody>
       <tfoot><tr class="total"><th scope="row">Total</th><td class="you">${ty.total}</td><td class="them">${tt.total}</td></tr></tfoot>`;
+    if (focused) this.el.querySelector(`tr.can[data-box="${focused}"]`)?.focus({ preventScroll: true });
   }
 }
 
