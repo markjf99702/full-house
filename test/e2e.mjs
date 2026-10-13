@@ -303,8 +303,16 @@ try {
     const box = await page.locator('tr.can').first().boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.move(box.x + box.width / 2 + 2, box.y + box.height / 2); // the pointer rests on the picked row
-    const fill = await page.evaluate(() => getComputedStyle(document.querySelector('tr.picked th')).backgroundColor);
-    assert.equal(fill, 'rgba(227, 168, 43, 0.38)', 'the picked row is grey under the pointer');
+    const fill = () => page.evaluate(() => getComputedStyle(document.querySelector('tr.picked th')).backgroundColor);
+    assert.equal(await fill(), 'rgba(227, 168, 43, 0.38)', 'the picked row is grey under the pointer');
+
+    // A box that scores three times over has a tint of its own, which picking it covers too.
+    await page.evaluate(() => window.fullHouse.start(2));
+    await page.click('#b-roll');
+    await settled();
+    await page.click('tr[data-box="f6"]');
+    await page.mouse.move(0, 0);
+    assert.equal(await fill(), 'rgba(227, 168, 43, 0.38)', 'a picked box at three times keeps its own tint');
   }, { desktop: true });
 
   await step('keyboard: R rolls wherever the focus is, and the browser keeps its shortcuts', async ({ page, game, settled }) => {

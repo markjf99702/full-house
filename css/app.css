@@ -387,7 +387,7 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
 .pad tr.can { cursor: pointer; }
 .pad tr.can:not(.picked):hover th, .pad tr.can:not(.picked):hover td.you { background: rgba(46, 72, 102, 0.05); }
 .pad tr.can:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.pad tr.picked th, .pad tr.picked td.you { background: rgba(227, 168, 43, 0.38); }
+.pad tr.picked th[scope='row'], .pad tr.picked td.you { background: rgba(227, 168, 43, 0.38); } /* over a hot box's tint too */
 .pad tr.picked th { box-shadow: inset 4px 0 0 var(--hold); }
 .pad tr.picked td.you span { color: var(--pencil); font-weight: 700; }
 .pad td.them.offer span { color: var(--red-pencil); font-weight: 500; opacity: 0.6; }
