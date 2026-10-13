@@ -169,6 +169,7 @@ function start(table, opp = table) {
   };
   busy = false;
   picked = null;
+  theirPick = null;
   closeSheets();
   open('game');
   save();
@@ -222,6 +223,7 @@ function concede(quietly) {
   }
   game = null;
   busy = false;
+  theirPick = null;
   save();
   if (!quietly) { closeSheets(); open('home'); }
 }
@@ -401,5 +403,5 @@ window.fullHouse = {
   progress,
   settings,
   start,
-  set(g) { token++; game = g; busy = false; picked = null; open('game'); showDice(); render(); if (g.turn === 'them') theirTurn(); },
+  set(g) { token++; game = g; busy = false; picked = null; theirPick = null; open('game'); showDice(); render(); if (g.turn === 'them') theirTurn(); },
 };

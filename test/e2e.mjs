@@ -257,6 +257,25 @@ try {
     assert.equal((await page.evaluate(() => window.fullHouse.progress)).played[0], 2, 'two games played, no extra loss');
   });
 
+  await step('giving up while the opponent writes a score leaves no trace in the next game', async ({ page, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    await page.locator('tr.can').first().click();
+    await page.locator('tr.can').first().click();
+    // While "Pip scores N in X" shows, give up and start a quick game.
+    await page.waitForFunction(() => {
+      if (!/scores \d+ in/.test(document.getElementById('status').textContent)) return false;
+      document.getElementById('b-menu').click();
+      document.getElementById('b-concede').click();
+      document.querySelector('[data-quick="0"]').click();
+      return true;
+    }, null, { polling: 20, timeout: 30000 });
+    assert.equal(await page.textContent('#g-table'), 'Quick game');
+    assert.equal(await page.locator('#pad td.them.offer').count(), 0, 'a score from the last game is pencilled in');
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
