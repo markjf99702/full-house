@@ -399,6 +399,22 @@ try {
     assert.equal(await load({ progress, game: good }), 'game');
   });
 
+  await step('a new game’s dice show the numbers they’re read out as', async ({ page, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-roll');
+    await settled();
+    await page.click('#b-menu');
+    await page.click('#b-concede');
+    await page.click('[data-quick="0"]');
+    // Which face each cube is turned to show, from its rotation.
+    const dice = await page.evaluate(() => [...document.querySelectorAll('.die')].map(b => {
+      const [x, y] = b.querySelector('.cube').style.transform.match(/-?\d+/g).map(n => ((+n % 360) + 360) % 360);
+      return [{ '0,0': 1, '0,270': 2, '270,0': 3, '90,0': 4, '0,90': 5, '0,180': 6 }[`${x},${y}`], +b.getAttribute('aria-label')];
+    }));
+    for (const [shown, read] of dice) assert.equal(shown, read, `a die shows ${shown} and is read out as ${read}`);
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');

@@ -42,7 +42,7 @@ export class Tray {
         hop.classList.remove('go');
         void hop.offsetWidth;
         hop.classList.add('go');
-      } else if (rolled.includes(i) || !b.dataset.v) {
+      } else if (rolled.includes(i) || b.dataset.v !== String(v)) { // or a new game's dice, set without a roll
         t.x = Math.round(t.x / 360) * 360 + fx;
         t.y = Math.round(t.y / 360) * 360 + fy;
       }
