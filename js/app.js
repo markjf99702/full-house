@@ -312,15 +312,18 @@ function intro(table) {
 }
 
 let opener = null;
+const behind = () => [$('home'), $('game')]; // the screens under a sheet, out of reach while it's open
 function openSheet(id) {
   closeSheets();
   opener = document.activeElement;
+  behind().forEach(el => { el.inert = true; });
   $(id).hidden = false;
   $(id).querySelector('.primary, .close, button')?.focus({ preventScroll: true });
 }
 function closeSheets() {
   const shown = document.querySelectorAll('.sheet:not([hidden])');
   shown.forEach(s => { s.hidden = true; });
+  behind().forEach(el => { el.inert = false; }); // before the focus goes back, which it can't to something inert
   if (shown.length && opener?.focus && document.contains(opener)) opener.focus({ preventScroll: true });
   opener = null;
 }

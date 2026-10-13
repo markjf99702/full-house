@@ -336,6 +336,23 @@ try {
     assert.equal(g.turn, 'them');
   }, { desktop: true });
 
+  await step('keyboard: Tab stays inside an open sheet, and the focus comes back after', async ({ page }) => {
+    await page.focus('[data-table="0"]');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#sheet-intro:not([hidden])');
+    const reached = [];
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab');
+      reached.push(await page.evaluate(() => {
+        const a = document.activeElement;
+        return a === document.body || a.closest('#sheet-intro') ? '' : a.textContent.trim();
+      }));
+    }
+    assert.deepEqual(reached.filter(Boolean), [], 'Tab reached the page behind the sheet');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.table), '0', 'the focus did not come back to table 1');
+  }, { desktop: true });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
