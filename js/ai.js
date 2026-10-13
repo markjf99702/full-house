@@ -89,10 +89,11 @@ function valuer(board, card, p) {
     if (isUpper(b) && need > 0 && p.bonus) {
       if (opt.score >= need) v += board.bonus.worth * p.bonus;
       else {
-        // Ahead of par or behind it, weighted by how much the bonus is still in reach.
+        // Ahead of par or behind it, weighted by how much the bonus is still in reach. Being ahead counts for one die's
+        // worth at most: the bonus doesn't need more, and counting it all put five sixes in Sixes for 30, not 50.
         const par = PAR[b.kind](b) * (b.mult || 1);
         const reach = Math.max(0, Math.min(1, (parLeft + 6 - need) / 12 + 0.5));
-        v += p.bonus * reach * (opt.score - par) * (board.bonus.worth / board.bonus.at) * p.pull;
+        v += p.bonus * reach * Math.min(opt.score - par, par / 3) * (board.bonus.worth / board.bonus.at) * p.pull;
       }
     }
     return v;

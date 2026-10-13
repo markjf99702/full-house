@@ -107,6 +107,17 @@ test('opponents only ever score where the rules allow, and fill the card in thir
   }
 });
 
+test('a first-turn five of a kind goes in Five of a kind for 50, not in its number box', () => {
+  const noSlip = () => 0.99;
+  for (const t of TABLES.slice(1)) {
+    const opp = new Opponent(t.play);
+    for (let f = 1; f <= 6; f++) {
+      const o = opp.box(CLASSIC, blankCard(CLASSIC), [f, f, f, f, f], noSlip);
+      assert.equal(o.box.kind, 'five', `${t.who.name} wrote five ${f}s in ${o.box.id}`);
+    }
+  }
+});
+
 test('the opponents get better as the tour goes on', () => {
   const avg = (play, games = 60) => {
     const rand = mulberry32(11), opp = new Opponent(play);
