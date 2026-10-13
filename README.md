@@ -47,6 +47,7 @@ node tools/screenshots.mjs     # redraws docs/*.png and og.png
 node tools/make-icons.mjs      # redraws the PNG icons from icon.svg
 npm run build                  # bundles everything into dist/full-house.html, one file you can send around
 node dev/strength.mjs 300 all  # how each opponent scores at its own table, against the best settings
+npm run sim                    # how often a rule-of-thumb player and the best planner beat each table's opponent
 ```
 
 To put it online with GitHub Pages: **Settings → Pages → Build and deployment → Deploy from a branch**, then pick `main` and `/ (root)`.
@@ -66,4 +67,4 @@ To put it online with GitHub Pages: **Settings → Pages → Build and deploymen
 - `test/`: the rules and the opponents in Node, and a game played through the real page.
 - `tools/`: redraws the README screenshots, the link preview and the icons.
 - `scripts/build.mjs`: bundles the game into one file, `dist/full-house.html`.
-- `dev/`: tools used while building it: opponent strength runs and quick screenshots.
+- `dev/`: tools used while building it: opponent strength runs, the ladder (how hard each table is to beat) and quick screenshots.
