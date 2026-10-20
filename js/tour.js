@@ -83,7 +83,7 @@ export const TABLES = [
       blurb: 'Two boxes, picked at random each time you sit down, score three times over. When one is a number box, the top-section bonus needs more to match.',
       hot: true,
     },
-    who: { name: 'Otto', line: 'Steady. Rarely misses the bonus.', colour: '#2f7d74' },
+    who: { name: 'Otto', line: 'Steady. Always goes for the bonus.', colour: '#2f7d74' },
     play: { patience: 1, bonus: 1.2, slip: 0.05 },
   },
   {
