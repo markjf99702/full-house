@@ -24,10 +24,10 @@ const base = `http://localhost:${server.address().port}/`;
 const browser = await pw.chromium.launch();
 const only = process.argv.slice(2).join(' ');
 
-// Each step starts on a fresh page with nothing saved: a phone, or a desktop with a mouse.
-async function step(name, fn, { desktop = false, serviceWorkers = 'block' } = {}) {
+// Each step starts on a fresh page with nothing saved: a phone (upright unless it says otherwise), or a desktop with a mouse.
+async function step(name, fn, { desktop = false, serviceWorkers = 'block', viewport = { width: 390, height: 844 } } = {}) {
   if (only && !name.includes(only)) return;
-  const size = desktop ? { viewport: { width: 1280, height: 800 } } : { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true };
+  const size = desktop ? { viewport: { width: 1280, height: 800 } } : { viewport, deviceScaleFactor: 2, hasTouch: true };
   const ctx = await browser.newContext({ ...size, serviceWorkers });
   const page = await ctx.newPage();
   const problems = [];
@@ -465,6 +465,28 @@ try {
     await page.click('#b-rules');
     assert.ok(await page.isVisible('#sheet-rules .panel'));
   });
+
+  await step('a phone held sideways has the pad beside the dice, with room to read it', async ({ page, settled }) => {
+    await page.evaluate(() => window.fullHouse.start(7)); // High Stakes, whose ×2 badges make the widest pad
+    await page.click('#b-roll');
+    await settled();
+    for (const [width, height] of [[844, 390], [667, 375]]) {
+      await page.setViewportSize({ width, height });
+      const m = await page.evaluate(() => {
+        const box = s => { const r = document.querySelector(s).getBoundingClientRect(); return { left: r.left, right: r.right }; };
+        const tray = box('.tray');
+        return {
+          tray, pad: box('.pad'), window: document.querySelector('.pad-wrap').clientHeight,
+          diceIn: [...document.querySelectorAll('.die')].every(d => { const r = d.getBoundingClientRect(); return r.left >= tray.left && r.right <= tray.right; }),
+          sideways: document.documentElement.scrollWidth > innerWidth,
+        };
+      });
+      assert.ok(m.tray.right <= m.pad.left, `at ${width} x ${height} the pad is under the dice, not beside them`);
+      assert.ok(m.window >= 300, `at ${width} x ${height} the pad shows only ${m.window}px at a time`);
+      assert.ok(m.diceIn, `at ${width} x ${height} the dice spill out of the tray`);
+      assert.equal(m.sideways, false, `at ${width} x ${height} the page scrolls sideways`);
+    }
+  }, { viewport: { width: 844, height: 390 } });
 
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');

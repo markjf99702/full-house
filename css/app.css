@@ -418,13 +418,20 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
 .pad tfoot th { padding: 8px 12px; text-align: left; font: 700 17px var(--cond); letter-spacing: 0.08em; text-transform: uppercase; }
 .pad tfoot td { height: 44px; font-size: 31px; }
 
-/* Side by side when there's room. */
-@media (min-width: 880px) {
+/* Side by side when there's room, and on a phone held sideways, where one column would leave the pad a sliver. */
+@media (min-width: 880px), (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
   .game { max-width: 1060px; grid-template-columns: 1fr minmax(380px, 460px); grid-template-rows: auto 1fr; column-gap: 24px; }
   .bar { grid-column: 1 / -1; }
   .play { align-self: start; padding: 40px 0 0 24px; }
   .tray { --d: 76px; height: 180px; }
   .pad-wrap { padding-right: 24px; }
+}
+/* Sideways, the screen is short and not so wide: a smaller tray, and half the width each, clear of a notch on either side. */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 640px) {
+  .game { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; }
+  .play { padding: 12px 0 0 calc(12px + env(safe-area-inset-left)); }
+  .tray { --d: min(7vw, 56px); height: calc(var(--d) + 48px); gap: min(1.8vw, 14px); }
+  .pad-wrap { padding: 4px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) 0; }
 }
 
 /* ---- sheets and messages ---- */
