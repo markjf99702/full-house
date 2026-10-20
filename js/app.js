@@ -309,13 +309,14 @@ function open(screen) {
 
 // ---- sheets and messages ----
 
-function intro(table) {
-  const t = TABLES[table];
-  $('intro-n').textContent = `Table ${table + 1} of ${TABLES.length}`;
-  $('intro-title').textContent = t.board.name;
-  $('intro-blurb').textContent = t.board.blurb;
+// A table on the tour, or a quick game (table null) against the opponent from table `opp`.
+function intro(table, opp = table) {
+  const t = TABLES[opp], board = table === null ? CLASSIC : t.board;
+  $('intro-n').textContent = table === null ? 'Quick game' : `Table ${table + 1} of ${TABLES.length}`;
+  $('intro-title').textContent = board.name;
+  $('intro-blurb').textContent = board.blurb;
   $('intro-who').innerHTML = `<i class="dot big" style="--c:${t.who.colour}">${t.who.name.replace(/^The /, '')[0]}</i><div><b>${t.who.name}</b><span>${t.who.line}</span>${game && !game.over ? '<em>Sitting down here ends the game you’re in.</em>' : ''}</div>`;
-  $('b-sit').onclick = () => start(table);
+  $('b-sit').onclick = () => start(table, opp);
   openSheet('sheet-intro');
 }
 
@@ -378,7 +379,13 @@ $('b-continue').addEventListener('click', () => {
   if (game?.turn === 'them' && !busy) theirTurn();
 });
 $('tables').addEventListener('click', e => { const b = e.target.closest('[data-table]'); if (b) intro(+b.dataset.table); });
-$('people').addEventListener('click', e => { const b = e.target.closest('[data-quick]'); if (b) start(null, +b.dataset.quick); });
+// A quick game starts straight away, unless it would end the game you're in: then it asks first, as a table on the tour does.
+$('people').addEventListener('click', e => {
+  const b = e.target.closest('[data-quick]');
+  if (!b) return;
+  if (game && !game.over) intro(null, +b.dataset.quick);
+  else start(null, +b.dataset.quick);
+});
 $('b-tour').addEventListener('click', () => { closeSheets(); game = null; save(); open('home'); });
 $('b-again').addEventListener('click', () => start(game.table, game.opp));
 $('b-rules').addEventListener('click', () => openSheet('sheet-rules'));

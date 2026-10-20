@@ -466,6 +466,29 @@ try {
     assert.ok(await page.isVisible('#sheet-rules .panel'));
   });
 
+  await step('a quick game asks first when it would end the game you’re in', async ({ page, game }) => {
+    const progress = () => page.evaluate(() => window.fullHouse.progress);
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.click('#b-home');
+    await page.click('[data-quick="0"]');
+    await page.waitForSelector('#sheet-intro:not([hidden])');
+    assert.equal(await page.textContent('#intro-n'), 'Quick game');
+    assert.equal(await page.textContent('#intro-title'), 'Classic');
+    assert.match(await page.textContent('#intro-who'), /Pip.*Sitting down here ends the game you’re in\./);
+    // Not yet: the game at table 1 carries on, and nothing is counted.
+    await page.click('#sheet-intro [data-close].plain');
+    assert.equal(await page.evaluate(() => document.body.dataset.screen), 'home');
+    assert.equal((await game()).table, 0, 'the tour game was ended');
+    assert.equal((await progress()).played[0], undefined, 'a game was counted');
+    // Sit down: that game counts as a loss, as it would for a table on the tour, and the quick game starts.
+    await page.click('[data-quick="0"]');
+    await page.click('#b-sit');
+    assert.equal(await page.textContent('#g-table'), 'Quick game');
+    assert.equal((await game()).table, null);
+    assert.equal((await progress()).played[0], 1);
+  });
+
   await step('How to play is in the game’s menu, and closing it goes back to the game', async ({ page }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
