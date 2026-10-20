@@ -21,10 +21,13 @@
   --rule: rgba(46, 72, 102, 0.16);
   --pencil: #2f2c29;
   --red-pencil: #b0392d;
-  --offer: #8797ab;
+  --offer: #6b7b90;
+  --small-print: #647283;
+  --red-print: #b8432f;
   --hold: #e3a82b;
   --accent: #b8432f;
   --accent-ink: #fff;
+  --accent-text: #b8432f;
   --ivory: #fbf7ee;
   --pip: #1d1b19;
   --red-die: #b8392f;
@@ -50,8 +53,11 @@
     --wood-dark: #2e1c0f;
     --paper: #e4dac5;
     --rule: rgba(46, 72, 102, 0.2);
-    --offer: #7c8a9c;
+    --offer: #6e7d91;
+    --small-print: #556170;
+    --red-print: #a43b2a;
     --accent: #c9553b;
+    --accent-text: #ef8e73;
     --panel: #26211c;
     color-scheme: dark;
   }
@@ -148,12 +154,12 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
   font: 700 19px var(--cond);
 }
 .tables .beaten .n { background: var(--print); color: var(--paper); }
-.tables .next .n { border-color: var(--accent); color: var(--accent); }
+.tables .next .n { border-color: var(--red-print); color: var(--red-print); }
 .tables .txt { display: grid; min-width: 0; }
 .tables .txt b { font: 700 19px/1.15 var(--cond); text-transform: uppercase; letter-spacing: 0.03em; }
 .tables .vs { font-size: 14.5px; color: #4f6178; }
-.tables small { font: 600 12.5px var(--text); color: #6b7a8c; }
-.tables .next small { color: var(--accent); }
+.tables small { font: 600 12.5px var(--text); color: var(--small-print); }
+.tables .next small { color: var(--red-print); }
 .tables .locked button { cursor: default; opacity: 0.5; }
 
 .dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--c); vertical-align: 0; }
@@ -382,7 +388,7 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
   color: var(--pencil);
 }
 .pad td.them { color: var(--red-pencil); }
-.pad td small { font: 600 12px var(--cond); color: rgba(46, 72, 102, 0.7); letter-spacing: 0.03em; }
+.pad td small { font: 600 12px var(--cond); color: var(--small-print); letter-spacing: 0.03em; }
 .pad td.offer span { color: var(--offer); font-weight: 500; }
 .pad tr.can { cursor: pointer; }
 .pad tr.can:not(.picked):hover th, .pad tr.can:not(.picked):hover td.you { background: rgba(46, 72, 102, 0.05); }
@@ -474,14 +480,14 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
 .panel h3 { margin: 22px 0 8px; font: 700 14px var(--cond); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .panel p { margin: 0 0 12px; }
 .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.eyebrow { margin: 0 0 4px !important; font: 700 13px var(--cond); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.eyebrow { margin: 0 0 4px !important; font: 700 13px var(--cond); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-text); }
 .close { flex: none; width: 40px; height: 40px; margin: -6px -8px 0 0; border: 0; border-radius: 50%; background: transparent; font-size: 28px; line-height: 1; color: var(--muted); cursor: pointer; }
 .close:hover { background: var(--line); }
 .who { display: flex; gap: 14px; align-items: center; margin: 16px 0 6px; padding: 14px; border-radius: 14px; background: var(--line); }
 .who div { display: grid; }
 .who b { font: 700 20px var(--cond); text-transform: uppercase; letter-spacing: 0.04em; }
 .who span { color: var(--muted); font-size: 15px; }
-.who em { margin-top: 6px; font-style: normal; font-size: 14px; color: var(--accent); }
+.who em { margin-top: 6px; font-style: normal; font-size: 14px; color: var(--accent-text); }
 .primary {
   display: block;
   width: 100%;
@@ -496,7 +502,7 @@ body[data-screen='home'] .game, body[data-screen='game'] .home { display: none; 
   text-transform: uppercase;
   cursor: pointer;
 }
-.plain { display: block; width: 100%; margin-top: 8px; padding: 11px; border: 0; border-radius: 12px; background: transparent; color: var(--accent); font-weight: 600; cursor: pointer; }
+.plain { display: block; width: 100%; margin-top: 8px; padding: 11px; border: 0; border-radius: 12px; background: transparent; color: var(--accent-text); font-weight: 600; cursor: pointer; }
 .plain:hover { background: var(--line); }
 .plain[hidden] { display: none; }
 .plain.warn { margin-top: 18px; color: var(--muted); }
