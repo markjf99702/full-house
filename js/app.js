@@ -302,6 +302,7 @@ function open(screen) {
   document.body.dataset.screen = screen;
   if (screen === 'home') renderHome();
   window.scrollTo(0, 0);
+  keepHistory();
 }
 
 // ---- sheets and messages ----
@@ -326,6 +327,7 @@ function openSheet(id, back) {
   behind().forEach(el => { el.inert = true; });
   $(id).hidden = false;
   $(id).querySelector('.primary, .close, button')?.focus({ preventScroll: true });
+  keepHistory();
 }
 function closeSheets() {
   const shown = document.querySelectorAll('.sheet:not([hidden])');
@@ -333,6 +335,7 @@ function closeSheets() {
   behind().forEach(el => { el.inert = false; }); // before the focus goes back, which it can't to something inert
   if (shown.length && opener?.focus && document.contains(opener)) opener.focus({ preventScroll: true });
   opener = null;
+  keepHistory();
 }
 
 let toastTimer = 0;
@@ -380,12 +383,13 @@ function save() {
 
 $('b-roll').addEventListener('click', roll);
 $('b-home').addEventListener('click', () => open('home'));
-$('b-continue').addEventListener('click', () => {
+function carryOn() {
   open('game');
   showDice();
   render();
   if (game?.turn === 'them' && !busy) theirTurn();
-});
+}
+$('b-continue').addEventListener('click', carryOn);
 $('tables').addEventListener('click', e => { const b = e.target.closest('[data-table]'); if (b) intro(+b.dataset.table); });
 // A quick game starts straight away, unless it would end the game you're in: then it asks first, as a table on the tour does.
 $('people').addEventListener('click', e => {
@@ -466,6 +470,45 @@ function adopt(g) {
   // As after a reload: the opponent's turn plays out here as well, the same way, since it comes from the game's seed.
   if (g.turn === 'them') { busy = true; setTimeout(theirTurn, 500); }
 }
+
+// ---- the back button ----
+
+// The phone's back button (or the browser's) closes an open sheet, or goes from a game to the tour, where the game waits
+// under Carry on, as after the arrow at the top. From the tour it leaves, as it always has. For that, the history has an
+// entry of ours for the game and one for an open sheet, on top of the tour's own, each holding how many of ours there are
+// up to it. They go on as the game and the sheets open, and come off as they close.
+const depth = state => (Number.isInteger(state?.fullHouse) ? state.fullHouse : 0);
+const sheetOpen = () => !!document.querySelector('.sheet:not([hidden])');
+const onScreen = () => (document.body.dataset.screen === 'game' ? 1 : 0) + (sheetOpen() ? 1 : 0);
+let steppingBack = 0; // steps back of ours that haven't landed yet
+let matching = false;
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; // back on the tour, it starts at the top, as it always has
+
+// Once whatever is opening and closing things has finished, so that one sheet closing as the next one opens moves nothing.
+function keepHistory() {
+  if (matching) return;
+  matching = true;
+  queueMicrotask(() => { matching = false; matchHistory(); });
+}
+function matchHistory() {
+  if (steppingBack) return; // this runs again when they land
+  try {
+    const want = onScreen();
+    for (let n = depth(history.state); n < want; n++) history.pushState({ fullHouse: n + 1 }, '');
+    const extra = depth(history.state) - want;
+    if (extra > 0) { history.go(-extra); steppingBack++; }
+  } catch { /* where there's no history to keep (in a sandboxed frame, say), it plays the same, only without Back */ }
+}
+addEventListener('popstate', e => {
+  if (steppingBack) { steppingBack--; keepHistory(); return; }
+  const at = depth(e.state);
+  // Back: close the sheet, then leave the game for the tour, until the screen is no deeper than the history.
+  if (at < onScreen() && sheetOpen()) closeSheets();
+  if (at < onScreen() && document.body.dataset.screen === 'game') open('home');
+  // Forward again, from the tour onto the game's entry: carry on with the game, if it's still going.
+  if (at > onScreen() && !sheetOpen() && document.body.dataset.screen === 'home' && game && !game.over) carryOn();
+  keepHistory(); // and anything forward that can't be shown again is stepped back off
+});
 
 // ---- offline ----
 

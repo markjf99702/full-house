@@ -606,6 +606,77 @@ try {
     assert.equal(Object.values(g.them).filter(v => v !== null).length - 1, 1, 'the opponent filled one box');
   });
 
+  await step('the back button closes a sheet, or goes from a game to the tour, and leaves from the tour', async t => {
+    const { page } = t;
+    await page.goto('about:blank'); // come from somewhere, so that leaving has somewhere to go
+    await page.goto(base);
+    // What's showing (the screen, and any sheet over it), and that the history holds an entry of the page's own for each.
+    const at = (showing, entries) => page.waitForFunction(([showing, entries]) => {
+      const now = document.body.dataset.screen + [...document.querySelectorAll('.sheet:not([hidden])')].map(s => ` + ${s.id}`).join('');
+      return now === showing && (history.state?.fullHouse || 0) === entries;
+    }, [showing, entries], { timeout: 10000 });
+    const progress = () => page.evaluate(() => window.fullHouse.progress);
+
+    // How to play on the tour: back closes it.
+    await page.click('#b-rules');
+    await at('home + sheet-rules', 1);
+    await page.goBack();
+    await at('home', 0);
+    // A game, sat down to from down the tour: back goes to the tour, from the top, where the game waits under Carry on,
+    // not given up and not counted.
+    const scrolled = await page.evaluate(() => { scrollTo(0, document.body.scrollHeight); document.querySelector('[data-table="0"]').click(); return scrollY; });
+    assert.ok(scrolled > 0);
+    await page.click('#b-sit');
+    await at('game', 1);
+    await page.click('#b-roll');
+    await t.settled();
+    await page.goBack();
+    await at('home', 0);
+    assert.equal(await page.evaluate(() => scrollY), 0, 'back to the tour, it was scrolled down');
+    assert.ok(await page.isVisible('#b-continue'), 'back gave the game up');
+    assert.equal((await progress()).played[0], undefined, 'back counted the game');
+    // Forward goes back into it.
+    await page.goForward();
+    await at('game', 1);
+    assert.equal((await t.game()).rolls, 1);
+    // In the game, back closes the menu and stays in the game.
+    await page.click('#b-menu');
+    await at('game + sheet-menu', 2);
+    await page.goBack();
+    await at('game', 1);
+    // A sheet closed and another opened straight after, before the step back for the first has landed: the second stays.
+    await page.click('#b-menu');
+    await page.evaluate(() => { document.querySelector('#sheet-menu .close').click(); setTimeout(() => document.getElementById('b-menu').click()); });
+    await page.waitForTimeout(500);
+    await at('game + sheet-menu', 2);
+    // A sheet closed on the page leaves nothing behind for back to close, so the next back goes to the tour.
+    await page.click('#sheet-menu .close');
+    await at('game', 1);
+    await page.goBack();
+    await at('home', 0);
+    // The same after a reload with the menu open: the game shows, and back goes to the tour.
+    await page.click('#b-continue');
+    await page.click('#b-menu');
+    await at('game + sheet-menu', 2);
+    await page.reload();
+    await at('game', 1);
+    await page.goBack();
+    await at('home', 0);
+    // A game's result: back closes it, then goes to the tour, where the game is over.
+    await page.click('#b-continue');
+    await win(t);
+    await at('game + sheet-result', 2);
+    await page.goBack();
+    await at('game', 1);
+    await page.goBack();
+    await at('home', 0);
+    assert.ok(await page.isHidden('#b-continue'), 'Carry on offered for a finished game');
+    assert.equal((await progress()).played[0], 1);
+    // From the tour, back leaves.
+    await page.goBack();
+    assert.equal(page.url(), 'about:blank');
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');
