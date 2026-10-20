@@ -466,6 +466,25 @@ try {
     assert.ok(await page.isVisible('#sheet-rules .panel'));
   });
 
+  await step('How to play is in the game’s menu, and closing it goes back to the game', async ({ page }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    const focused = () => page.evaluate(() => document.activeElement.id);
+    await page.click('#b-menu');
+    await page.click('#b-menu-rules');
+    assert.ok(await page.isVisible('#sheet-rules .panel'), 'How to play did not open');
+    assert.ok(await page.isHidden('#sheet-menu'), 'the menu stayed open under How to play');
+    await page.keyboard.press('Escape');
+    assert.ok(await page.isHidden('#sheet-rules'));
+    assert.equal(await page.evaluate(() => document.body.dataset.screen), 'game');
+    assert.equal(await focused(), 'b-menu', 'the focus did not come back to the menu button');
+    // The same when a tap moves no focus on the way, as in Safari: the menu opened from the table's name this time.
+    await page.evaluate(() => { document.activeElement.blur(); document.getElementById('b-where').click(); });
+    await page.evaluate(() => document.getElementById('b-menu-rules').click());
+    await page.click('#sheet-rules .close');
+    assert.equal(await focused(), 'b-menu', 'the focus was lost after How to play from the menu');
+  });
+
   await step('a phone held sideways has the pad beside the dice, with room to read it', async ({ page, settled }) => {
     await page.evaluate(() => window.fullHouse.start(7)); // High Stakes, whose ×2 badges make the widest pad
     await page.click('#b-roll');

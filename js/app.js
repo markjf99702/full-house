@@ -321,9 +321,10 @@ function intro(table) {
 
 let opener = null;
 const behind = () => [$('home'), $('game')]; // the screens under a sheet, out of reach while it's open
-function openSheet(id) {
+// `back` is where the focus goes when the sheet closes, if not to whatever had it before.
+function openSheet(id, back) {
   closeSheets();
-  opener = document.activeElement;
+  opener = back || document.activeElement;
   behind().forEach(el => { el.inert = true; });
   $(id).hidden = false;
   $(id).querySelector('.primary, .close, button')?.focus({ preventScroll: true });
@@ -381,6 +382,8 @@ $('people').addEventListener('click', e => { const b = e.target.closest('[data-q
 $('b-tour').addEventListener('click', () => { closeSheets(); game = null; save(); open('home'); });
 $('b-again').addEventListener('click', () => start(game.table, game.opp));
 $('b-rules').addEventListener('click', () => openSheet('sheet-rules'));
+// From the menu, which closes as How to play opens: afterwards the focus goes back to the menu button.
+$('b-menu-rules').addEventListener('click', () => openSheet('sheet-rules', $('b-menu')));
 const showMenu = () => {
   if (!game) return;
   $('menu-title').textContent = game.table === null ? 'Quick game' : `Table ${game.table + 1}: ${game.board.name}`;
