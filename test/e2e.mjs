@@ -530,6 +530,82 @@ try {
     }
   }, { viewport: { width: 844, height: 390 } });
 
+  await step('a second copy open at the same time picks up what the other one saves', async t => {
+    const { page, ctx } = t;
+    const other = await ctx.newPage(), trouble = [];
+    other.on('pageerror', e => trouble.push(e.message));
+    await other.goto(base);
+    const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('full-house.v1')));
+    const until = (p, fn, arg) => p.waitForFunction(fn, arg, { timeout: 15000 });
+    const gameIn = p => p.evaluate(() => window.fullHouse.game);
+
+    // Beat Pip in one copy: the other copy's tour shows it, and the next thing it saves keeps it.
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await win(t);
+    await until(other, () => /Next up/.test(document.querySelector('#tables li:nth-child(2)').textContent));
+    await other.click('[data-quick="1"]'); // Maud, met by beating Pip; with no game going there, it starts at once
+    assert.equal((await saved()).game.opp, 1, 'the quick game was not saved');
+    assert.equal((await saved()).progress.beaten[0], true, 'the other copy saved over the win');
+    // The first copy puts the new game in place of the last one's result.
+    await until(page, () => document.getElementById('g-table').textContent === 'Quick game');
+    assert.ok(await page.isHidden('#sheet-result'), 'the result of the last game stayed up over the new one');
+
+    // A setting changed in one copy changes in the other.
+    await other.click('#b-menu');
+    await other.click('#o-hints');
+    await until(page, () => !window.fullHouse.settings.hints && !document.getElementById('o-hints').checked);
+    await other.keyboard.press('Escape');
+
+    // A roll in one copy shows in the other, and carries on there, even part way through a turn in the first.
+    await page.click('#b-roll');
+    await t.settled();
+    await until(other, g => JSON.stringify(window.fullHouse.game) === g && !window.fullHouse.busy, JSON.stringify(await gameIn(page)));
+    await other.click('#b-roll');
+    await until(other, () => !window.fullHouse.busy);
+    await until(page, g => JSON.stringify(window.fullHouse.game) === g, JSON.stringify(await gameIn(other)));
+    // But a save from behind a roll made here (a copy slow to save, say) doesn't take that roll back.
+    const mine = await gameIn(page);
+    await other.evaluate(g => {
+      const s = JSON.parse(localStorage.getItem('full-house.v1'));
+      localStorage.setItem('full-house.v1', JSON.stringify({ ...s, settings: { ...s.settings, hints: true }, game: { ...g, rolls: 1 } }));
+    }, mine);
+    await until(page, () => window.fullHouse.settings.hints); // that save has arrived
+    assert.deepEqual(await gameIn(page), mine, 'a save a roll behind took back a roll');
+
+    // Scoring a box in one copy: both play the opponent's turn, the same way, and come to turn 2.
+    await page.locator('tr.can').first().click();
+    await page.locator('tr.can').first().click();
+    await t.myTurn();
+    await until(other, () => window.fullHouse.game?.number === 2 && window.fullHouse.game.turn === 'you' && !window.fullHouse.busy);
+    assert.deepEqual(await gameIn(other), await gameIn(page));
+
+    // Both copies play the last turn of the game too, and it counts once.
+    await lastTurn(t);
+    await until(page, () => !window.fullHouse.game || window.fullHouse.game.over);
+    await page.waitForTimeout(3000); // the other copy's turn would end a moment later
+    assert.equal((await saved()).progress.quick.played, 1, 'the game was counted twice');
+    assert.equal(await other.evaluate(() => window.fullHouse.progress.quick.played), 1);
+    assert.equal(await other.evaluate(() => window.fullHouse.busy || !!window.fullHouse.game && !window.fullHouse.game.over), false, 'the other copy is still playing');
+    assert.deepEqual(trouble, [], 'problems in the other copy');
+  });
+
+  await step('a second copy plays the opponent’s turn when the first closes part way through it', async ({ page, ctx, settled }) => {
+    await page.click('[data-table="0"]');
+    await page.click('#b-sit');
+    await page.evaluate(() => { window.fullHouse.settings.fast = true; });
+    const other = await ctx.newPage();
+    await other.goto(base); // opens on the game in progress
+    await page.click('#b-roll');
+    await settled();
+    await page.locator('tr.can').first().click();
+    await page.locator('tr.can').first().click();
+    await page.close(); // straight after scoring, before the opponent has played
+    await other.waitForFunction(() => window.fullHouse.game?.number === 2 && window.fullHouse.game.turn === 'you' && !window.fullHouse.busy, null, { timeout: 15000 });
+    const g = await other.evaluate(() => window.fullHouse.game);
+    assert.equal(Object.values(g.them).filter(v => v !== null).length - 1, 1, 'the opponent filled one box');
+  });
+
   await step('a save stuck with both cards full on the opponent’s turn ends the game', async ({ page, myTurn }) => {
     await page.click('[data-table="0"]');
     await page.click('#b-sit');

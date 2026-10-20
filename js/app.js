@@ -10,11 +10,8 @@ import { mulberry32 } from './rng.js';
 const KEY = 'full-house.v1';
 const $ = id => document.getElementById(id);
 const saved = read();
-const settings = { fast: false, hints: true, ...saved.settings };
-const progress = { beaten: [], best: [], played: [], won: [], quick: { played: 0, won: 0 }, ...saved.progress };
-// The game only ever saves these whole, but a save damaged some other way shouldn't stop it from starting.
-for (const k of ['beaten', 'best', 'played', 'won']) if (!Array.isArray(progress[k])) progress[k] = [];
-progress.quick = { played: 0, won: 0, ...(progress.quick && typeof progress.quick === 'object' ? progress.quick : {}) };
+const settings = settingsFrom(saved.settings);
+const progress = progressFrom(saved.progress);
 
 let game = whole(saved.game) ? saved.game : null;
 let busy = false;      // dice in the air, or the opponent playing (or about to)
@@ -354,6 +351,17 @@ const escape = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt
 function read() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
 }
+// Settings and progress from a save, with anything missing filled in. The game only ever saves these whole,
+// but a save damaged some other way shouldn't stop it from starting.
+function settingsFrom(s) {
+  return { fast: false, hints: true, ...s };
+}
+function progressFrom(p) {
+  const out = { beaten: [], best: [], played: [], won: [], quick: { played: 0, won: 0 }, ...p };
+  for (const k of ['beaten', 'best', 'played', 'won']) if (!Array.isArray(out[k])) out[k] = [];
+  out.quick = { played: 0, won: 0, ...(out.quick && typeof out.quick === 'object' ? out.quick : {}) };
+  return out;
+}
 // A saved game still being played, with every part the page reads there to pick it up again.
 function whole(g) {
   try {
@@ -401,7 +409,8 @@ $('b-menu').addEventListener('click', showMenu);
 $('b-where').addEventListener('click', showMenu);
 $('b-concede').addEventListener('click', () => concede(false));
 document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeSheets));
-for (const [k, id] of [['fast', 'o-fast'], ['hints', 'o-hints']]) {
+const TOGGLES = [['fast', 'o-fast'], ['hints', 'o-hints']];
+for (const [k, id] of TOGGLES) {
   $(id).checked = settings[k];
   $(id).addEventListener('change', e => { settings[k] = e.target.checked; save(); render(); });
 }
@@ -413,6 +422,50 @@ document.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'r' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); roll(); }
   if (/^[1-5]$/.test(e.key)) toggle(+e.key - 1);
 });
+
+// ---- open in two places ----
+
+// The game can be open twice at once: in two tabs, or in a tab and the installed app. When the other copy saves, this
+// one takes its settings and progress, so as not to save over them later, and its game as well, unless you're part
+// way through a turn here that the other copy hasn't got past. Then this copy keeps its game, and whichever saves last wins.
+addEventListener('storage', e => {
+  if (e.key !== KEY || !e.newValue) return;
+  let next;
+  try { next = JSON.parse(e.newValue); } catch { return; }
+  if (!next || typeof next !== 'object') return;
+  if (next.settings && typeof next.settings === 'object') Object.assign(settings, settingsFrom(next.settings));
+  if (next.progress && typeof next.progress === 'object') Object.assign(progress, progressFrom(next.progress));
+  for (const [k, id] of TOGGLES) $(id).checked = settings[k];
+  const theirs = whole(next.game) ? next.game : null, ours = game && !game.over ? game : null;
+  if (JSON.stringify(theirs) !== JSON.stringify(ours) && !keepOurs(ours, theirs)) adopt(theirs);
+  if (document.body.dataset.screen === 'home') renderHome(); else render();
+});
+
+// How far into a game a save is: the turn, then the rolls used, with the opponent's go after all of yours.
+const reached = g => g.number * 10 + (g.turn === 'them' ? 9 : g.rolls);
+// Part way through your turn here, with the other copy behind it in the same game, or on another game, or none.
+function keepOurs(ours, theirs) {
+  if (!ours || ours.turn !== 'you' || ours.rolls === 0) return false;
+  if (!theirs || theirs.seed !== ours.seed) return true;
+  return reached(theirs) < reached(ours) || (reached(theirs) === reached(ours) && theirs.dice.join() !== ours.dice.join());
+}
+
+// Take up the other copy's game, or its having none. The new token calls off whatever this copy still had to do for
+// the old one (the opponent's next move, a result about to show), and a sheet about the old game closes.
+function adopt(g) {
+  token++;
+  game = g;
+  busy = hurry = false;
+  picked = theirPick = null;
+  playing = -1;
+  fresh = {};
+  if ($('sheet-rules').hidden) closeSheets();
+  if (document.body.dataset.screen !== 'game') return;
+  if (!g) { closeSheets(); open('home'); return; }
+  showDice();
+  // As after a reload: the opponent's turn plays out here as well, the same way, since it comes from the game's seed.
+  if (g.turn === 'them') { busy = true; setTimeout(theirTurn, 500); }
+}
 
 // ---- offline ----
 
